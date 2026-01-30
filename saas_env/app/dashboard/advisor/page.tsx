@@ -24,7 +24,7 @@ const messageVariants = {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: { type: "spring", stiffness: 200, damping: 20 }
+        transition: { type: "spring" as const, stiffness: 200, damping: 20 }
     },
     exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
 };
@@ -34,7 +34,7 @@ const suggestionVariants = {
     visible: (i: number) => ({
         opacity: 1,
         y: 0,
-        transition: { delay: i * 0.1, type: "spring", stiffness: 200 }
+        transition: { delay: i * 0.1, type: "spring" as const, stiffness: 200 }
     })
 };
 
@@ -287,8 +287,8 @@ export default function AdvisorPage() {
                                         <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                                             <motion.div
                                                 className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 shadow-lg ${msg.role === 'bot'
-                                                        ? 'bg-gradient-to-br from-primary to-accent text-white shadow-primary/30'
-                                                        : 'bg-secondary text-secondary-foreground border border-border'
+                                                    ? 'bg-gradient-to-br from-primary to-accent text-white shadow-primary/30'
+                                                    : 'bg-secondary text-secondary-foreground border border-border'
                                                     }`}
                                                 whileHover={{ scale: 1.1 }}
                                             >
@@ -297,8 +297,8 @@ export default function AdvisorPage() {
 
                                             <motion.div
                                                 className={`rounded-2xl p-4 text-sm shadow-lg ${msg.role === 'user'
-                                                        ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-tr-sm shadow-primary/30'
-                                                        : 'bg-card border border-primary/20 rounded-tl-sm prose prose-sm dark:prose-invert max-w-none shadow-black/20'
+                                                    ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-tr-sm shadow-primary/30'
+                                                    : 'bg-card border border-primary/20 rounded-tl-sm prose prose-sm dark:prose-invert max-w-none shadow-black/20'
                                                     }`}
                                                 whileHover={{ scale: 1.01 }}
                                             >
