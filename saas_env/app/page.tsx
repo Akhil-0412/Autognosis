@@ -21,7 +21,7 @@ export default function Home() {
             <div className="flex flex-col items-center space-y-4">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-                  The Smart SaaS Dashboard
+                  Autognosis
                 </h1>
                 <p className="mx-auto max-w-[700px] text-gray-300 md:text-xl">
                   Manage your business with Role-Based Access Control, Audit Logging, and Seamless Billing.
