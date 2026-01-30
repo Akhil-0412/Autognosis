@@ -27,7 +27,7 @@ const messageVariants = {
         transition: { type: "spring" as const, stiffness: 200, damping: 20 }
     },
     exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
-};
+} as const;
 
 const suggestionVariants = {
     hidden: { opacity: 0, y: 10 },
