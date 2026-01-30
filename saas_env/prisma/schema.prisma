@@ -21,6 +21,8 @@ model Profile {
   auditLogs AuditLog[]
   subscription Subscription?
   vehicles  Vehicle[]
+  queryCount Int @default(0)
+  lastQueryDate DateTime?
 }
 
 model AuditLog {

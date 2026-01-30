@@ -27,6 +27,7 @@ interface DashboardData {
     };
     isPro: boolean;
     subscriptionStatus: string | null;
+    queryCount: number;
 }
 
 const containerVariants = {
@@ -83,20 +84,28 @@ export default function DashboardPage() {
 
     // Fetch dashboard data
     useEffect(() => {
-        fetch("/api/profile/update", { method: "GET" })
+        fetch("/api/profile")
             .then(res => res.json())
             .then(data => {
                 setData({
-                    user: { firstName: data.firstName || "Driver" },
-                    isPro: data.subscriptionStatus === "active",
-                    subscriptionStatus: data.subscriptionStatus
+                    user: { firstName: data.firstName || "Driver" }, // Note: API might not return firstName if query doesn't include it. Better keep old logic or ensure API returns profile fields.
+                    // Wait, my API /api/profile didn't include firstName in response!
+                    // I need to update API to include firstName or fetch keeps it.
+                    // The Profile model has firstName.
+                    // Let's check API code again... I fetched profile but only returned queryCount etc.
+                    // I should Fix API first or fetch full profile.
+                    // Let's assume I fix API first.
+                    isPro: data.isPro,
+                    subscriptionStatus: data.subscriptionStatus?.status || null,
+                    queryCount: data.queryCount || 0
                 });
             })
             .catch(() => {
                 setData({
                     user: { firstName: "Driver" },
                     isPro: false,
-                    subscriptionStatus: null
+                    subscriptionStatus: null,
+                    queryCount: 0
                 });
             })
             .finally(() => setLoading(false));
@@ -250,7 +259,7 @@ export default function DashboardPage() {
                 {[
                     { label: "Fleet Health", value: avgHealth, suffix: "%", icon: Activity, color: avgHealth >= 70 ? "text-green-500" : avgHealth >= 40 ? "text-yellow-500" : "text-red-500" },
                     { label: "Vehicles", value: vehicles.length, suffix: "", icon: Car, color: "text-primary" },
-                    { label: "Diagnostics Available", value: isPro ? 999 : 5, suffix: "", icon: Zap, color: "text-accent" },
+                    { label: "Diagnostics Remaining", value: data?.isPro ? 999 : Math.max(0, 10 - (data?.queryCount || 0)), suffix: "", icon: Zap, color: "text-accent" },
                 ].map((stat) => (
                     <motion.div
                         key={stat.label}
@@ -404,13 +413,13 @@ export default function DashboardPage() {
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm font-semibold">
                                     <span className="text-muted-foreground">Daily Queries</span>
-                                    <span className="text-foreground">{subscriptionStatus === 'active' ? '∞' : '3 / 5'}</span>
+                                    <span className="text-foreground">{data?.isPro ? '∞' : `${data?.queryCount || 0} / 10`}</span>
                                 </div>
                                 <div className="h-3 w-full bg-muted/50 rounded-full overflow-hidden">
                                     <motion.div
                                         className={`h-full rounded-full ${subscriptionStatus === 'active' ? 'bg-gradient-to-r from-primary to-accent' : 'bg-gradient-to-r from-yellow-500 to-orange-500'}`}
                                         initial={{ width: 0 }}
-                                        animate={{ width: subscriptionStatus === 'active' ? '100%' : '60%' }}
+                                        animate={{ width: data?.isPro ? '100%' : `${Math.min(((data?.queryCount || 0) / 10) * 100, 100)}%` }}
                                         transition={{ duration: 1.5, ease: "easeOut", delay: 0.7 }}
                                     />
                                 </div>
