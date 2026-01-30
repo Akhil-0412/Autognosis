@@ -46,12 +46,12 @@ const itemVariants = {
         opacity: 1,
         y: 0,
         transition: {
-            type: "spring",
+            type: "spring" as const,
             stiffness: 100,
             damping: 15
         }
     }
-};
+} as const;
 
 function AnimatedCounter({ value, duration = 2000 }: { value: number; duration?: number }) {
     const [count, setCount] = useState(0);
