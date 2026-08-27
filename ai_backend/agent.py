@@ -102,18 +102,18 @@ def _clean_result(result: dict) -> dict:
     return result
 
 
-class Diagnosis(BaseModel):
-    """Structured diagnostic response returned to the Autognosis dashboard."""
+class FollowUps(BaseModel):
+    """The tappable extras the dashboard shows beneath a reply.
 
-    # These descriptions are the only instructions that reach LangGraph's final
-    # structured-output call, which does not carry the agent's system prompt.
-    # Rules that matter for the returned shape have to live here, not there.
-    advice: str = Field(
-        description=(
-            "Plain text response to the user. No markdown headings, no asterisks, "
-            "no tables, no backticks, and no em or en dashes."
-        )
-    )
+    Deliberately excludes the reply itself. Having the model copy a long answer
+    through a second call cost seconds and thousands of tokens per request, ran
+    the deployment into Groq's rate limit, and risked quietly rewording the
+    diagnosis. The answer is used exactly as the agent wrote it.
+    """
+
+    # These descriptions are the only instructions that reach the structured
+    # call, which does not carry the agent's system prompt. Rules that matter
+    # for the returned shape have to live here, not there.
     suggestions: list[str] = Field(
         default_factory=list,
         description=(
@@ -205,8 +205,10 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
                 "and ask how you can assist them today. Be welcoming."
             )
 
-        # Agent Tools
-        tavily_tool = TavilySearchResults(max_results=3)
+        # Agent Tools. Each web result is pushed into the model's context, so
+        # three of them cost real latency and burn through Groq's rate limit on
+        # long diagnoses. Two is enough to ground an answer.
+        tavily_tool = TavilySearchResults(max_results=2)
         tools = [tavily_tool, query_vehicle_history, check_warranty_status]
 
         # Build message history
@@ -228,49 +230,59 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
         response = await agent_executor.ainvoke({"messages": messages})
         final_message = response["messages"][-1].content.strip()
 
-        # No tools are bound to this call, so there is no tool_choice to conflict
-        # with, and the schema's field descriptions are the instructions that
-        # actually reach it.
+        # The agent's own words are the answer. This second call only asks for
+        # the follow-up buttons, so it emits a handful of tokens instead of a
+        # copy of the whole diagnosis. It runs on the small model because
+        # picking three follow-ups needs no depth, and it has no tools bound,
+        # so there is no tool_choice for the schema to collide with.
+        result = {
+            "advice": final_message,
+            "suggestions": [],
+            "video_link": None,
+            "video_label": None,
+        }
+
         try:
-            packager = llm.with_structured_output(Diagnosis)
-            packaged = await packager.ainvoke(
+            fast_llm = ChatGroq(
+                api_key=api_key,
+                model=os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b"),
+                temperature=0.3,
+            )
+            follow_ups = await fast_llm.with_structured_output(FollowUps).ainvoke(
                 [
                     SystemMessage(
                         content=(
-                            "You format a vehicle assistant's reply for its dashboard. "
-                            "Copy the reply into `advice` with its meaning unchanged, "
-                            "converting any markdown to plain text. Then write the "
-                            "follow-up suggestions described by the schema, based on "
-                            "what the reply actually discussed."
+                            "You choose the follow-up buttons shown under a vehicle "
+                            "assistant's reply. Base them on what the reply actually "
+                            "discussed, and follow the schema exactly."
                         )
                     ),
-                    HumanMessage(content=f"Vehicle: {vehicle_context}\n\nReply:\n{final_message}"),
+                    HumanMessage(
+                        content=f"{vehicle_context}\n\nReply to the owner:\n{final_message}"
+                    ),
                 ]
             )
-            if isinstance(packaged, Diagnosis) and packaged.advice.strip():
-                return _clean_result(packaged.model_dump())
-        except Exception as packaging_err:
-            print(f"Response packaging failed, returning prose: {packaging_err}")
+            if isinstance(follow_ups, FollowUps):
+                result.update(follow_ups.model_dump())
+        except Exception as follow_up_err:
+            # A missing set of buttons is not worth failing the answer over.
+            print(f"Follow-up generation failed: {follow_up_err}")
 
-        # The model may still have emitted JSON on its own; accept it if valid.
-        match = re.search(r'\{.*\}', final_message, re.DOTALL)
-        if match:
-            try:
-                parsed = json.loads(match.group(0))
-                if isinstance(parsed, dict) and "advice" in parsed:
-                    return _clean_result(parsed)
-            except json.JSONDecodeError:
-                pass
-
-        # Otherwise the prose itself is the advice, never surface an empty reply.
-        return _clean_result({
-            "advice": final_message,
-            "suggestions": ["Tell me more", "Cost estimate?"],
-            "video_link": None,
-            "video_label": None
-        })
+        return _clean_result(result)
 
     except Exception as e:
         import traceback
         traceback.print_exc()
+
+        # Groq's rate limit is the one failure a user hits in normal use, so it
+        # gets a reply they can act on instead of a raw API error.
+        if "rate limit" in str(e).lower() or "429" in str(e):
+            return {
+                "response": (
+                    "I am handling too many requests right now. Give me a moment "
+                    "and ask again."
+                ),
+                "suggestions": [],
+            }
+
         return {"response": f"Error during agent execution: {str(e)}", "suggestions": []}
