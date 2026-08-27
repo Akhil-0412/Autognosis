@@ -9,9 +9,10 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
         return {"response": "Error: GROQ_API_KEY not found.", "suggestions": []}
 
     try:
+        model_name = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
         llm = ChatGroq(
             api_key=api_key,
-            model="llama-3.3-70b-versatile",
+            model=model_name,
             temperature=0.3
         )
         

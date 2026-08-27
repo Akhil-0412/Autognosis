@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="neonCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#47D9D9" />
+      <stop offset="100%" stop-color="#2176FF" />
+    </linearGradient>
+
+    <linearGradient id="plasmaGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2176FF" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+
+    <linearGradient id="metalDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3A4356" />
+      <stop offset="50%" stop-color="#1E2330" />
+      <stop offset="100%" stop-color="#0F131D" />
+    </linearGradient>
+
+    <linearGradient id="metalLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C8CA8" />
+      <stop offset="100%" stop-color="#283042" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="cyanGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="intenseGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- ================= CROSSED WRENCH 1 (-45 deg) ================= -->
+  <g transform="translate(256, 256) rotate(-45) translate(-256, -256)">
+    <!-- Wrench Shaft Glow -->
+    <rect x="236" y="55" width="40" height="402" rx="12" fill="#00D2FF" opacity="0.35" filter="url(#cyanGlow)" />
+    <!-- Wrench Shaft Body -->
+    <rect x="238" y="58" width="36" height="396" rx="10" fill="url(#metalDark)" stroke="url(#metalLight)" stroke-width="4" />
+    
+    <!-- Top Wrench Head -->
+    <path d="M 226,115 L 226,65 C 208,77 190,65 184,36 C 208,12 238,24 256,24 C 274,24 304,12 328,36 C 322,65 304,77 286,65 L 286,115 Z" 
+          fill="url(#metalDark)" stroke="#47D9D9" stroke-width="5" filter="url(#cyanGlow)" />
+    <!-- Top Jaws Cutout -->
+    <path d="M 226,24 L 256,60 L 286,24 Z" fill="none" stroke="url(#neonCyan)" stroke-width="4" />
+
+    <!-- Bottom Wrench Head -->
+    <path d="M 226,397 L 226,447 C 208,435 190,447 184,476 C 208,500 238,488 256,488 C 274,488 304,500 328,476 C 322,447 304,435 286,447 L 286,397 Z" 
+          fill="url(#metalDark)" stroke="#47D9D9" stroke-width="5" filter="url(#cyanGlow)" />
+    <!-- Bottom Jaws Cutout -->
+    <path d="M 226,488 L 256,452 L 286,488 Z" fill="none" stroke="url(#neonCyan)" stroke-width="4" />
+  </g>
+
+  <!-- ================= CROSSED WRENCH 2 (+45 deg) ================= -->
+  <g transform="translate(256, 256) rotate(45) translate(-256, -256)">
+    <!-- Wrench Shaft Glow -->
+    <rect x="236" y="55" width="40" height="402" rx="12" fill="#00D2FF" opacity="0.35" filter="url(#cyanGlow)" />
+    <!-- Wrench Shaft Body -->
+    <rect x="238" y="58" width="36" height="396" rx="10" fill="url(#metalDark)" stroke="url(#metalLight)" stroke-width="4" />
+    
+    <!-- Top Wrench Head -->
+    <path d="M 226,115 L 226,65 C 208,77 190,65 184,36 C 208,12 238,24 256,24 C 274,24 304,12 328,36 C 322,65 304,77 286,65 L 286,115 Z" 
+          fill="url(#metalDark)" stroke="#47D9D9" stroke-width="5" filter="url(#cyanGlow)" />
+    <!-- Top Jaws Cutout -->
+    <path d="M 226,24 L 256,60 L 286,24 Z" fill="none" stroke="url(#neonCyan)" stroke-width="4" />
+
+    <!-- Bottom Wrench Head -->
+    <path d="M 226,397 L 226,447 C 208,435 190,447 184,476 C 208,500 238,488 256,488 C 274,488 304,500 328,476 C 322,447 304,435 286,447 L 286,397 Z" 
+          fill="url(#metalDark)" stroke="#47D9D9" stroke-width="5" filter="url(#cyanGlow)" />
+    <!-- Bottom Jaws Cutout -->
+    <path d="M 226,488 L 256,452 L 286,488 Z" fill="none" stroke="url(#neonCyan)" stroke-width="4" />
+  </g>
+
+  <!-- ================= FOREGROUND ROBOTIC "A" ================= -->
+  <g id="RoboticA" filter="url(#intenseGlow)">
+    <!-- Outer Cybernetic A Armor Shadow -->
+    <path d="M 256,70 L 396,415 L 328,415 L 298,335 L 214,335 L 184,415 L 116,415 Z" 
+          fill="#060910" opacity="0.95" />
+
+    <!-- Outer Armor Plates with Stencil Bevels -->
+    <path d="M 256,75 L 392,410 L 332,410 L 302,338 L 210,338 L 180,410 L 120,410 Z" 
+          fill="url(#metalDark)" stroke="url(#metalLight)" stroke-width="6" />
+
+    <!-- Neon Edge Highlights on the 'A' Legs -->
+    <!-- Left Arm -->
+    <path d="M 256,78 L 126,408" stroke="#47D9D9" stroke-width="8" stroke-linecap="round" />
+    <!-- Right Arm -->
+    <path d="M 256,78 L 386,408" stroke="#47D9D9" stroke-width="8" stroke-linecap="round" />
+
+    <!-- Futuristic Robotic Crossbar Plate -->
+    <polygon points="178,318 334,318 318,352 194,352" fill="url(#metalDark)" stroke="#2176FF" stroke-width="4" />
+    <line x1="194" y1="335" x2="318" y2="335" stroke="#47D9D9" stroke-width="5" />
+
+    <!-- Glowing Triangular Neon HUD Visor in Core of A -->
+    <polygon points="256,155 298,285 214,285" 
+             fill="#08101F" stroke="#00D2FF" stroke-width="7" filter="url(#cyanGlow)" />
+
+    <polygon points="256,182 284,270 228,270" 
+             fill="url(#neonCyan)" />
+
+    <!-- Robotic Joint Bolts at Vertices -->
+    <!-- Top Apex Bolt -->
+    <circle cx="256" cy="100" r="14" fill="url(#metalDark)" stroke="#47D9D9" stroke-width="3.5" />
+    <circle cx="256" cy="100" r="6" fill="#47D9D9" />
+
+    <!-- Left Foot Bolt -->
+    <circle cx="152" cy="388" r="12" fill="url(#metalDark)" stroke="#47D9D9" stroke-width="3" />
+    <circle cx="152" cy="388" r="5" fill="#00D2FF" />
+
+    <!-- Right Foot Bolt -->
+    <circle cx="360" cy="388" r="12" fill="url(#metalDark)" stroke="#47D9D9" stroke-width="3" />
+    <circle cx="360" cy="388" r="5" fill="#00D2FF" />
+
+    <!-- Cyber Circuit Nodes -->
+    <circle cx="256" cy="38" r="5" fill="#47D9D9" />
+    <line x1="256" y1="38" x2="256" y2="68" stroke="#47D9D9" stroke-width="4" />
+  </g>
+</svg>
