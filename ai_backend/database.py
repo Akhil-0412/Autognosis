@@ -1,52 +1,75 @@
 import os
 import json
-from supabase import create_client, Client
+import psycopg2
+from psycopg2.extras import Json
+from pgvector.psycopg2 import register_vector
+import logging
 
-def get_supabase() -> Client:
-    url: str = os.environ.get("SUPABASE_URL", "")
-    key: str = os.environ.get("SUPABASE_SERVICE_KEY", "")
-    if not url or not key:
-        raise ValueError("Missing SUPABASE_URL or SUPABASE_SERVICE_KEY")
-    return create_client(url, key)
+logger = logging.getLogger(__name__)
+
+def get_db_connection():
+    db_url = os.environ.get("DATABASE_URL", "")
+    if not db_url:
+        raise ValueError("Missing DATABASE_URL")
+    
+    conn = psycopg2.connect(db_url)
+    register_vector(conn)
+    return conn
 
 async def store_vehicle_document(vehicle_id: str, document_data: dict, embedding: list = None):
     """
-    Stores a parsed document into the Supabase database.
+    Stores a parsed document into the Neon database.
     If embedding is provided, it stores it in a pgvector column for semantic search.
     """
-    supabase = get_supabase()
-    
-    # Store raw document
-    doc_record = {
-        "vehicle_id": vehicle_id,
-        "content": json.dumps(document_data),
-        "embedding": embedding # Assuming a vector column exists in Supabase
-    }
-    
-    response = supabase.table("vehicle_documents").insert(doc_record).execute()
-    return response.data
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        cur.execute(
+            "INSERT INTO vehicle_documents (vehicle_id, content, embedding) VALUES (%s, %s, %s) RETURNING id;",
+            (vehicle_id, Json(document_data), embedding)
+        )
+        inserted_id = cur.fetchone()[0]
+        conn.commit()
+        
+        cur.close()
+        conn.close()
+        return [{"id": inserted_id}]
+    except Exception as e:
+        logger.error(f"Error storing document: {str(e)}")
+        raise
 
 async def query_history_rag(query: str, vehicle_id: str) -> str:
     """
-    Queries the vehicle history using Supabase pgvector match_documents function.
+    Queries the vehicle history using pgvector similarity search in Neon.
     """
     # Placeholder for actual embedding generation of the query
     # In production, we would embed the query string here.
     query_embedding = [0.0] * 1536 # Mock 1536-d vector
     
-    supabase = get_supabase()
-    
     try:
-        # Example RPC call to a Supabase pgvector match function
-        response = supabase.rpc(
-            "match_vehicle_documents",
-            {"query_embedding": query_embedding, "match_threshold": 0.7, "match_count": 5, "p_vehicle_id": vehicle_id}
-        ).execute()
+        conn = get_db_connection()
+        cur = conn.cursor()
         
-        if not response.data:
+        # pgvector similarity search (<-> is L2 distance, <=>` is cosine)
+        cur.execute(
+            \"\"\"
+            SELECT content FROM vehicle_documents
+            WHERE vehicle_id = %s
+            ORDER BY embedding <=> %s
+            LIMIT 5;
+            \"\"\",
+            (vehicle_id, query_embedding)
+        )
+        
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        if not rows:
             return "No relevant historical records found."
             
-        results = [f"Record: {doc['content']}" for doc in response.data]
+        results = [f"Record: {json.dumps(row[0])}" for row in rows]
         return "\n\n".join(results)
     except Exception as e:
         return f"Error querying database: {str(e)}"
@@ -55,15 +78,27 @@ async def fetch_warranty_status(part_name: str, vehicle_id: str) -> str:
     """
     Queries the database specifically looking for a part and returning its warranty status.
     """
-    supabase = get_supabase()
-    
     try:
-        # Simplistic JSONB query (In reality, we might use pgvector for semantic part matching)
-        response = supabase.table("vehicle_documents").select("content").eq("vehicle_id", vehicle_id).execute()
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # We can query all documents for the vehicle, or even use Postgres JSONB queries directly.
+        # For simplicity, we'll fetch them and parse in Python as before.
+        cur.execute(
+            "SELECT content FROM vehicle_documents WHERE vehicle_id = %s;",
+            (vehicle_id,)
+        )
+        
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
         
         relevant_warranties = []
-        for row in response.data:
-            data = json.loads(row["content"])
+        for row in rows:
+            data = row[0]
+            if isinstance(data, str):
+                data = json.loads(data)
+                
             if "parts_replaced" in data:
                 for part in data["parts_replaced"]:
                     if part_name.lower() in part.get("part_name", "").lower():

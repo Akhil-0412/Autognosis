@@ -242,8 +242,8 @@ function AiMechanicPage() {
 
   return (
     <AppShell active="/ai-mechanic">
-      <div className="mx-auto flex max-w-7xl flex-col gap-gutter p-margin-mobile md:h-[calc(100vh-170px)] md:flex-row md:p-margin-desktop">
-        <section className="glass-panel flex h-[calc(100vh-240px)] flex-col overflow-hidden md:h-full md:flex-[0_0_63%]">
+      <div className="bg-hud-pattern mx-auto flex max-w-7xl flex-col gap-gutter p-margin-mobile md:h-[calc(100vh-170px)] md:flex-row md:p-margin-desktop rounded-xl border border-line/50 overflow-hidden shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
+        <section className="glass-panel border-r-0 rounded-r-none flex h-[calc(100vh-240px)] flex-col overflow-hidden md:h-full md:flex-[0_0_65%] bg-void/80">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line bg-surface-container-low p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-plasma/20 text-plasma shadow-[0_0_15px_rgba(33,118,255,0.3)]">
@@ -301,13 +301,13 @@ function AiMechanicPage() {
             </div>
           </div>
 
-          <div className="flex flex-1 flex-col space-y-6 overflow-y-auto p-6">
+          <div className="flex flex-1 flex-col space-y-2 overflow-y-auto p-4 md:p-6 no-scrollbar">
             {messages.map((m, i) => {
               if (m.role === "system") {
                 return (
                   <div
                     key={i}
-                    className="self-center rounded-md border border-line bg-surface-container px-3 py-1 font-terminal text-terminal text-muted"
+                    className="w-full border-l-2 border-line/40 bg-surface-container-lowest/50 px-4 py-2 font-terminal text-xs tracking-wider text-muted shadow-[inset_0_0_20px_rgba(0,0,0,0.2)]"
                   >
                     {m.text}
                   </div>
@@ -315,61 +315,55 @@ function AiMechanicPage() {
               }
               if (m.role === "user") {
                 return (
-                  <div key={i} className="max-w-[80%] self-end">
-                    <div className="rounded-2xl rounded-tr-sm border border-line bg-surface-container p-4 text-text">
-                      <p className="text-body-md whitespace-pre-wrap">{m.text}</p>
-                    </div>
-                    <div className="mt-1 text-right font-terminal text-label-sm text-muted">
-                      {m.time}
+                  <div key={i} className="w-full flex justify-end pb-4 pt-2">
+                    <div className="max-w-[75%] border-r-2 border-plasma/60 bg-plasma/5 px-4 py-3 text-right">
+                      <p className="text-body-md whitespace-pre-wrap text-text">{m.text}</p>
+                      <div className="mt-1 font-terminal text-[10px] tracking-widest text-plasma/60 uppercase">
+                        Operator · {m.time}
+                      </div>
                     </div>
                   </div>
                 );
               }
               return (
-                <div key={i} className="flex max-w-[85%] gap-4 self-start">
-                  <div className="flex h-10 w-10 flex-shrink-0 animate-float-gentle items-center justify-center rounded-full border border-ion bg-surface shadow-[0_0_12px_rgba(71,217,217,0.3)]">
-                    <Icon name="smart_toy" className="text-ion" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="mb-1 font-terminal text-label-sm tracking-wider text-ion">
-                      SPARKY · AI MECHANIC
+                <div key={i} className="w-full flex justify-start pb-4 pt-2">
+                  <div className="max-w-[85%] border-l-2 border-ion/60 bg-ion/5 px-4 py-3 shadow-[inset_20px_0_40px_rgba(71,217,217,0.03)]">
+                    <div className="mb-2 flex items-center gap-2 font-terminal text-[10px] tracking-widest text-ion uppercase">
+                      <Icon name="smart_toy" className="text-sm" />
+                      <span>Autognosis Intelligence Core</span>
                     </div>
-                    <div className="glass-panel rounded-2xl rounded-tl-sm border-ion/40 p-4 text-text shadow-[0_0_15px_rgba(71,217,217,0.1)]">
-                      <p className="text-body-md whitespace-pre-wrap leading-relaxed">{m.text}</p>
+                    <p className="text-body-md whitespace-pre-wrap leading-relaxed text-text/90">{m.text}</p>
 
-                      {m.video_link ? (
-                        <div className="mt-3 border-t border-line/40 pt-3">
-                          <a
-                            href={m.video_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-2 rounded-lg bg-plasma/20 px-3 py-1.5 font-terminal text-label-sm text-plasma transition-colors hover:bg-plasma/30"
-                          >
-                            <Icon name="bolt" /> {m.video_label || "Watch DIY Guide"}
-                          </a>
-                        </div>
-                      ) : null}
-                    </div>
+                    {m.video_link ? (
+                      <div className="mt-4 inline-block border border-ion/30 bg-ion/10 p-1 rounded-sm">
+                        <a
+                          href={m.video_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-2 px-3 py-1.5 font-terminal text-xs text-ion transition-colors hover:bg-ion/20"
+                        >
+                          <Icon name="play_circle" className="text-base" /> {m.video_label || "Watch Reference"}
+                        </a>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               );
             })}
 
             {loading ? (
-              <div className="flex max-w-[85%] gap-4 self-start">
-                <div className="flex h-10 w-10 flex-shrink-0 animate-spin items-center justify-center rounded-full border border-ion bg-surface">
-                  <Icon name="refresh" className="text-ion" />
-                </div>
-                <div className="glass-panel rounded-2xl rounded-tl-sm border-ion/40 p-4 text-muted">
-                  <span className="font-terminal text-label-sm animate-pulse">
-                    Sparky is running diagnostic simulations...
-                  </span>
+              <div className="w-full flex justify-start pb-4 pt-2">
+                <div className="max-w-[85%] border-l-2 border-ion/40 bg-ion/5 px-4 py-3">
+                   <div className="flex items-center gap-3 font-terminal text-xs tracking-widest text-ion/70 uppercase">
+                     <Icon name="sync" className="animate-spin text-sm" />
+                     <span className="animate-pulse">Processing telemetry & vectors...</span>
+                   </div>
                 </div>
               </div>
             ) : null}
           </div>
 
-          <div className="border-t border-line bg-surface-container-low p-4">
+          <div className="border-t border-line/50 bg-deep/80 p-4 backdrop-blur-md">
             {currentSuggestions.length > 0 ? (
               <div className="scrollbar-hide flex gap-2 overflow-x-auto pb-3">
                 {currentSuggestions.map((s) => (
@@ -377,15 +371,16 @@ function AiMechanicPage() {
                     key={s}
                     onClick={() => send(s)}
                     disabled={loading}
-                    className="rounded-full border border-line bg-surface px-3 py-1.5 font-terminal text-label-sm whitespace-nowrap text-muted transition-colors hover:border-ion hover:text-ion active:scale-95 disabled:opacity-50"
+                    className="border border-line bg-surface/50 px-3 py-1.5 font-terminal text-[11px] uppercase tracking-wider whitespace-nowrap text-muted transition-colors hover:border-ion hover:text-ion hover:bg-ion/10 active:scale-95 disabled:opacity-50 shadow-[0_0_10px_rgba(0,0,0,0.5)]"
                   >
-                    {s}
+                    [{s}]
                   </button>
                 ))}
               </div>
             ) : null}
             <div className="flex items-end gap-3">
-              <div className="flex flex-1 items-center rounded-xl border border-line bg-surface px-4 py-2 transition-all focus-within:border-plasma focus-within:shadow-[0_0_10px_rgba(33,118,255,0.2)]">
+              <div className="flex flex-1 items-center border border-line bg-void/90 px-4 py-2 transition-all focus-within:border-plasma focus-within:shadow-[0_0_15px_rgba(33,118,255,0.2)]">
+                <span className="text-plasma/60 font-terminal text-sm mr-3">&gt;</span>
                 <textarea
                   rows={1}
                   value={draft}
@@ -396,8 +391,8 @@ function AiMechanicPage() {
                       send(draft);
                     }
                   }}
-                  placeholder="Describe symptoms, sounds, or ask Sparky anything..."
-                  className="h-10 w-full resize-none border-none bg-transparent py-2 text-body-md text-text placeholder-muted focus:outline-none"
+                  placeholder="Enter diagnostic query, symptom, or request data..."
+                  className="h-10 w-full resize-none border-none bg-transparent py-2 font-terminal text-sm text-text placeholder-muted/50 focus:outline-none"
                 />
                 <button
                   type="button"
@@ -405,22 +400,22 @@ function AiMechanicPage() {
                   className="p-2 text-muted transition-colors hover:text-plasma"
                   title="Run Full Scan"
                 >
-                  <Icon name="attach_file" />
+                  <Icon name="troubleshoot" />
                 </button>
               </div>
               <button
                 onClick={() => send(draft)}
                 disabled={loading || !draft.trim()}
                 aria-label="Send message"
-                className="plasma-pulse flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-plasma text-white transition-opacity disabled:opacity-40"
+                className="plasma-pulse flex h-12 w-12 flex-shrink-0 items-center justify-center bg-plasma/20 border border-plasma/50 text-plasma transition-all disabled:opacity-40 hover:bg-plasma hover:text-void hover:border-plasma"
               >
-                <Icon name="bolt" />
+                <Icon name="arrow_forward" />
               </button>
             </div>
           </div>
         </section>
 
-        <section className="glass-panel flex h-[400px] flex-col p-6 md:h-full md:flex-[0_0_35%]">
+        <section className="glass-panel border-l-0 rounded-l-none flex h-[400px] flex-col p-6 md:h-full md:flex-[0_0_35%] bg-deep/90 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] z-10">
           <div className="mb-6 flex items-center justify-between border-b border-line pb-4">
             <h2 className="font-display text-headline-sm text-text">Live Diagnostics</h2>
             <Icon name="troubleshoot" className="text-plasma" />
