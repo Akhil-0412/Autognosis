@@ -1,27 +1,14 @@
 {
+  "framework": null,
   "buildCommand": "npm run build",
   "outputDirectory": ".output/public",
+  "installCommand": "npm install",
   "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/favicon.svg",
-      "destination": "/favicon.svg"
-    },
-    {
-      "source": "/favicon.ico",
-      "destination": "/favicon.ico"
-    },
-    {
-      "source": "/favicon.png",
-      "destination": "/favicon.png"
-    },
-    {
-      "source": "/assets/(.*)",
-      "destination": "/assets/$1"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
+    { "source": "/favicon.svg", "destination": "/favicon.svg" },
+    { "source": "/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/favicon.png", "destination": "/favicon.png" },
+    { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
