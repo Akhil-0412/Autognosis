@@ -45,6 +45,9 @@ import {
   Palette,
   CreditCard,
   Radio,
+  Loader2,
+  PlayCircle,
+  Circle,
   FileText,
   type LucideIcon,
 } from "lucide-react";
@@ -102,6 +105,8 @@ const LUCIDE_MAP: Record<string, LucideIcon> = {
   battery_charging: BatteryCharging,
   analytics: BarChart2,
   palette: Palette,
+  sync: Loader2,
+  play_circle: PlayCircle,
 };
 
 export function Icon({
@@ -128,16 +133,17 @@ export function Icon({
     );
   }
 
-  // Fallback to Material Symbols Outlined if no Lucide match
+  // No Material Symbols webfont is loaded, so an unmapped name used to render
+  // as its literal text (the "sync" spinner showed the word "sync"). Fall back
+  // to a neutral glyph instead and surface the gap in development.
+  if (import.meta.env.DEV) {
+    console.warn(`Icon: "${name}" is not in LUCIDE_MAP; rendering placeholder.`);
+  }
+
   return (
-    <span
+    <Circle
       aria-hidden="true"
-      className={cn("material-symbols-outlined inline-block select-none", className)}
-      style={filled ? { fontVariationSettings: "'FILL' 1" } : undefined}
-    >
-      {name}
-    </span>
+      className={cn("inline-block shrink-0", filled ? "fill-current" : "", className)}
+    />
   );
 }
-
-
