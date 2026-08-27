@@ -369,7 +369,7 @@ function AiMechanicPage() {
                 {currentSuggestions.map((s) => (
                   <button
                     key={s}
-                    onClick={() => send(s)}
+                    onClick={() => handleSend(s)}
                     disabled={loading}
                     className="border border-line bg-surface/50 px-3 py-1.5 font-terminal text-[11px] uppercase tracking-wider whitespace-nowrap text-muted transition-colors hover:border-ion hover:text-ion hover:bg-ion/10 active:scale-95 disabled:opacity-50 shadow-[0_0_10px_rgba(0,0,0,0.5)]"
                   >
@@ -388,7 +388,7 @@ function AiMechanicPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
-                      send(draft);
+                      handleSend(draft);
                     }
                   }}
                   placeholder="Enter diagnostic query, symptom, or request data..."
@@ -396,7 +396,7 @@ function AiMechanicPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => send("Run full OBD2 system diagnostics scan")}
+                  onClick={() => handleSend("Run full OBD2 system diagnostics scan")}
                   className="p-2 text-muted transition-colors hover:text-plasma"
                   title="Run Full Scan"
                 >
@@ -404,7 +404,7 @@ function AiMechanicPage() {
                 </button>
               </div>
               <button
-                onClick={() => send(draft)}
+                onClick={() => handleSend(draft)}
                 disabled={loading || !draft.trim()}
                 aria-label="Send message"
                 className="plasma-pulse flex h-12 w-12 flex-shrink-0 items-center justify-center bg-plasma/20 border border-plasma/50 text-plasma transition-all disabled:opacity-40 hover:bg-plasma hover:text-void hover:border-plasma"
