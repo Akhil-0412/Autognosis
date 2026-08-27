@@ -59,14 +59,46 @@ def _plain_text(value: str) -> str:
     return value.strip()
 
 
+# The schema and the prompt both tell the model to stay inside its abilities and
+# it still offers to book a garage slot now and then. Suggestions are a fixed
+# short list rendered as tappable buttons, so a wrong one is a promise the app
+# cannot keep. Drop them outright rather than asking more nicely.
+_UNSUPPORTED_SUGGESTION_RE = re.compile(
+    r"\b(schedul\w*|book\w*|appointment|reserv\w*|order\w*|purchas\w*|buy|"
+    r"call|phone|contact\w*|navigat\w*|directions|tow\w*|nearby|"
+    r"charging station\w*|locate)\b",
+    re.IGNORECASE,
+)
+
+_FALLBACK_SUGGESTIONS = [
+    "Look up service history",
+    "Check warranty cover",
+    "Ask about maintenance",
+]
+
+
+def _supported_suggestions(suggestions: list) -> list:
+    kept = [
+        s for s in suggestions
+        if isinstance(s, str) and s.strip() and not _UNSUPPORTED_SUGGESTION_RE.search(s)
+    ]
+    # Never leave the user with a single lonely button.
+    for spare in _FALLBACK_SUGGESTIONS:
+        if len(kept) >= 2:
+            break
+        if spare not in kept:
+            kept.append(spare)
+    return kept[:3]
+
+
 def _clean_result(result: dict) -> dict:
     for key in ("advice", "response"):
         if isinstance(result.get(key), str):
             result[key] = _plain_text(result[key])
     if isinstance(result.get("suggestions"), list):
-        result["suggestions"] = [
-            _plain_text(s) for s in result["suggestions"] if isinstance(s, str)
-        ]
+        result["suggestions"] = _supported_suggestions(
+            [_plain_text(s) for s in result["suggestions"] if isinstance(s, str)]
+        )
     return result
 
 
