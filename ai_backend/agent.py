@@ -73,10 +73,26 @@ def _clean_result(result: dict) -> dict:
 class Diagnosis(BaseModel):
     """Structured diagnostic response returned to the Autognosis dashboard."""
 
-    advice: str = Field(description="Plain text response to the user. No markdown.")
+    # These descriptions are the only instructions that reach LangGraph's final
+    # structured-output call, which does not carry the agent's system prompt.
+    # Rules that matter for the returned shape have to live here, not there.
+    advice: str = Field(
+        description=(
+            "Plain text response to the user. No markdown headings, no asterisks, "
+            "no tables, no backticks, and no em or en dashes."
+        )
+    )
     suggestions: list[str] = Field(
         default_factory=list,
-        description="Two to three short follow-up actions the user can tap.",
+        description=(
+            "Two or three follow-up actions, each under about six words. Only "
+            "actions this assistant can carry out in conversation: diagnose a "
+            "symptom, look up the service history, check warranty cover, research "
+            "a repair, or advise on maintenance. Never booking or scheduling, "
+            "ordering parts, contacting a garage, or navigation, as it cannot do "
+            "those. Each must suit the vehicle's powertrain: no charging for a "
+            "petrol vehicle, no oil or exhaust service for an electric one."
+        ),
     )
     video_link: Optional[str] = Field(default=None, description="URL to a relevant video, if any.")
     video_label: Optional[str] = Field(default=None, description="Label for the video, if any.")
@@ -122,6 +138,19 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
         2. **Check Warranty**: If evaluating a part failure, use `check_warranty_status`.
         3. **External Research**: Use `tavily_search_results_json` if you need external or up-to-date information (e.g. standard repair procedures, recall notices, or typical costs).
 
+        **FOLLOW-UP SUGGESTIONS:**
+        - Work out the powertrain from the year, make and model before you suggest
+          anything. An F-150 EcoBoost is a turbocharged petrol V6, an F-150
+          Lightning is electric, a Prius is a hybrid. Never offer an action that
+          does not apply to that powertrain: no charging stations for a petrol
+          vehicle, no oil changes or exhaust checks for an EV.
+        - Only suggest things you can actually do in this conversation: diagnose a
+          symptom, look up the service history, check warranty cover, research a
+          repair, or advise on maintenance. You cannot book appointments, order
+          parts, or contact a garage, so never offer to.
+        - Follow on from what was just said. Do not fall back to generic app
+          features.
+
         **HOW TO WRITE (STRICT):**
         - Write plain text. The dashboard renders your reply exactly as you write it,
           so any markup shows up on screen as punctuation the user has to read around.
@@ -158,26 +187,38 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
 
         messages.append(HumanMessage(content=query))
 
-        # Preferred path: let LangGraph coerce the final turn into the schema.
-        # Asking the model to hand-write JSON makes tool-calling models (notably
-        # gpt-oss) invent a bogus `json` tool, which Groq rejects outright.
-        final_message = ""
+        # Reason first with the tools, then package the answer in a second call.
+        # Doing both at once (response_format on the agent) makes Groq demand a
+        # tool call on turns where the model has nothing to look up, so short
+        # replies like the greeting fail with tool_use_failed. Splitting them
+        # keeps the tool loop and the schema out of each other's way.
+        agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
+        response = await agent_executor.ainvoke({"messages": messages})
+        final_message = response["messages"][-1].content.strip()
+
+        # No tools are bound to this call, so there is no tool_choice to conflict
+        # with, and the schema's field descriptions are the instructions that
+        # actually reach it.
         try:
-            agent_executor = create_react_agent(
-                llm, tools, prompt=system_prompt, response_format=Diagnosis
+            packager = llm.with_structured_output(Diagnosis)
+            packaged = await packager.ainvoke(
+                [
+                    SystemMessage(
+                        content=(
+                            "You format a vehicle assistant's reply for its dashboard. "
+                            "Copy the reply into `advice` with its meaning unchanged, "
+                            "converting any markdown to plain text. Then write the "
+                            "follow-up suggestions described by the schema, based on "
+                            "what the reply actually discussed."
+                        )
+                    ),
+                    HumanMessage(content=f"Vehicle: {vehicle_context}\n\nReply:\n{final_message}"),
+                ]
             )
-            response = await agent_executor.ainvoke({"messages": messages})
-
-            structured = response.get("structured_response")
-            if isinstance(structured, Diagnosis):
-                return _clean_result(structured.model_dump())
-
-            final_message = response["messages"][-1].content.strip()
-        except Exception as structured_err:
-            print(f"Structured output unavailable, falling back to plain agent: {structured_err}")
-            agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
-            response = await agent_executor.ainvoke({"messages": messages})
-            final_message = response["messages"][-1].content.strip()
+            if isinstance(packaged, Diagnosis) and packaged.advice.strip():
+                return _clean_result(packaged.model_dump())
+        except Exception as packaging_err:
+            print(f"Response packaging failed, returning prose: {packaging_err}")
 
         # The model may still have emitted JSON on its own; accept it if valid.
         match = re.search(r'\{.*\}', final_message, re.DOTALL)
