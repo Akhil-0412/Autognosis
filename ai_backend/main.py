@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List, Dict
@@ -14,6 +14,7 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "")
 
 # Import after loading env to ensure keys are present
 from agent import run_agent
+from document_processor import process_document
 
 app = FastAPI(title="Autognosis AI & Telemetry API", version="2.0.0")
 
@@ -176,6 +177,22 @@ async def analyze(request: AnalyzeRequest):
         }
     except Exception as e:
         print(f"Error processing request: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/documents/process")
+async def process_document_endpoint(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
+        # Decode text (assuming txt or basic parsed OCR output for now)
+        text = content.decode("utf-8", errors="ignore")
+        
+        result = await process_document(text)
+        if "error" in result:
+            raise HTTPException(status_code=400, detail=result["error"])
+            
+        # TODO: Store structured result and its embeddings in Supabase Vector DB
+        return {"status": "success", "extracted_data": result}
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

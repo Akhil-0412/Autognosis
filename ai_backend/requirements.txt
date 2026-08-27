@@ -2,5 +2,9 @@ fastapi
 uvicorn
 langchain-groq
 langchain-core
+langchain
+langchain-community
 langgraph
+tavily-python
+supabase
 python-dotenv

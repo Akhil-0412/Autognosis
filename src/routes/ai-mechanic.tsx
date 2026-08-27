@@ -60,6 +60,48 @@ function AiMechanicPage() {
   const [usage, setUsage] = useState<DailyUsage>(getDailyUsage());
   const [countdown, setCountdown] = useState(getTimeUntilMidnight());
 
+  const triggerSystemInit = async (vehicle: Vehicle) => {
+    setLoading(true);
+    try {
+      const res = await fetch(getApiUrl("/analyze"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: "[SYSTEM_INIT]",
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          mileage: vehicle.mileage,
+          history: [],
+        }),
+      });
+
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+
+      const data = await res.json();
+      const sparkyReply: Message = {
+        role: "sparky",
+        text: data.response || "Connection established. How can I help you today?",
+        suggestions: data.suggestions && data.suggestions.length > 0 ? data.suggestions : undefined,
+        video_link: data.video_link,
+        video_label: data.video_label,
+      };
+
+      setMessages((prev) => [...prev, sparkyReply]);
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "sparky",
+          text: `Connection established. I am ready to assist with your ${vehicle.year} ${vehicle.make} ${vehicle.model}. What seems to be the issue?`,
+          suggestions: ["Diagnose symptom", "Maintenance schedule"],
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const initVehicles = () => {
     const list = getActiveVehicles();
     setVehicles(list);
@@ -68,21 +110,15 @@ function AiMechanicPage() {
 
     if (curr) {
       setMessages([
-        { role: "system", text: `[SYSTEM_INIT] CONNECTED TO ${curr.year} ${curr.make.toUpperCase()} ${curr.model.toUpperCase()} (OBD2 LINK ESTABLISHED)` },
-        {
-          role: "sparky",
-          text: `Hey! I'm Sparky 🛠️, your AI mechanic. I'm connected to your **${curr.year} ${curr.make} ${curr.model}** (${curr.plate}) with **${curr.mileage.toLocaleString()} miles**.\n\nTell me what's going on (weird sounds, warning lights, vibrations, or maintenance questions) and let's get it diagnosed!`,
-          suggestions: curr.issueDescription
-            ? [`Diagnose symptom: "${curr.issueDescription}"`, "What's the estimated repair cost?", "Is it safe to drive?"]
-            : ["Engine light is on with a rattling noise", "Brakes squeaking at low speed", "When is my next transmission service due?"],
-        },
+        { role: "system", text: `[SYSTEM_INIT] CONNECTED TO ${curr.year} ${curr.make.toUpperCase()} ${curr.model.toUpperCase()} (OBD2 LINK ESTABLISHED)` }
       ]);
+      triggerSystemInit(curr);
     } else {
       setMessages([
         { role: "system", text: "[SYSTEM_INIT] NO VEHICLES REGISTERED" },
         {
           role: "sparky",
-          text: "Hey! I'm Sparky 🛠️, your AI mechanic buddy. You don't have any vehicles registered yet. Click 'Register Vehicle' at the top or register one now so I know what car we're working on!",
+          text: "You don't have any vehicles registered yet. Click 'Register Vehicle' at the top or register one now so I know what car we're working on!",
           suggestions: ["How does Autognosis AI diagnose cars?", "Show supported OBD2 protocols"],
         },
       ]);
@@ -129,15 +165,9 @@ function AiMechanicPage() {
         {
           role: "system",
           text: `[TELEMETRY_SWITCH] DIAGNOSTIC CONTEXT SWITCHED TO ${target.year} ${target.make} ${target.model} (${target.plate})`,
-        },
-        {
-          role: "sparky",
-          text: `Switched focus to your **${target.year} ${target.make} ${target.model}** (${target.plate}) with **${target.mileage.toLocaleString()} mi**.\n\nWhat would you like to inspect or troubleshoot on this vehicle?`,
-          suggestions: target.issueDescription
-            ? [`Investigate: "${target.issueDescription}"`, "Check maintenance schedule", "Estimated repair cost?"]
-            : ["Perform full diagnostics scan", "Check brake & tire wear", "Review recent sensor telemetry"],
-        },
+        }
       ]);
+      triggerSystemInit(target);
     }
   };
 
