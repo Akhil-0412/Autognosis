@@ -4,14 +4,48 @@
   "outputDirectory": ".output/public",
   "installCommand": "npm install",
   "cleanUrls": true,
+  "functions": {
+    "api/index.py": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.py" },
-    { "source": "/analyze", "destination": "/api/index.py" },
-    { "source": "/documents/process", "destination": "/api/index.py" },
-    { "source": "/favicon.svg", "destination": "/favicon.svg" },
-    { "source": "/favicon.ico", "destination": "/favicon.ico" },
-    { "source": "/favicon.png", "destination": "/favicon.png" },
-    { "source": "/assets/(.*)", "destination": "/assets/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/analyze",
+      "destination": "/api"
+    },
+    {
+      "source": "/health",
+      "destination": "/api"
+    },
+    {
+      "source": "/documents/process",
+      "destination": "/api"
+    },
+    {
+      "source": "/stripe/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/favicon.svg",
+      "destination": "/favicon.svg"
+    },
+    {
+      "source": "/favicon.ico",
+      "destination": "/favicon.ico"
+    },
+    {
+      "source": "/favicon.png",
+      "destination": "/favicon.png"
+    },
+    {
+      "source": "/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

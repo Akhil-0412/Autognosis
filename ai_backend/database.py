@@ -53,12 +53,12 @@ async def query_history_rag(query: str, vehicle_id: str) -> str:
         
         # pgvector similarity search (<-> is L2 distance, <=>` is cosine)
         cur.execute(
-            \"\"\"
+            """
             SELECT content FROM vehicle_documents
             WHERE vehicle_id = %s
             ORDER BY embedding <=> %s
             LIMIT 5;
-            \"\"\",
+            """,
             (vehicle_id, query_embedding)
         )
         

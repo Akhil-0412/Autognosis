@@ -69,7 +69,7 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
         tools = [tavily_tool, query_vehicle_history, check_warranty_status]
         
         # Build Agent Executor
-        agent_executor = create_react_agent(llm, tools, state_modifier=system_prompt)
+        agent_executor = create_react_agent(llm, tools, prompt=system_prompt)
         
         # Build message history
         messages = []
