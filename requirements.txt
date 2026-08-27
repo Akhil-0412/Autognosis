@@ -1,11 +1,14 @@
 fastapi
 uvicorn
-langchain-groq
-langchain-core
-langchain
-langchain-community
-langgraph
-tavily-python
+python-multipart
+# Pinned: unpinned installs are what silently broke create_react_agent's
+# state_modifier kwarg between deploys. Versions verified together locally.
+langchain-groq==1.1.3
+langchain-core==1.6.0
+langchain==1.3.18
+langchain-community==0.4.2
+langgraph==1.2.11
+tavily-python==0.8.0
 psycopg2-binary
 pgvector
 python-dotenv
