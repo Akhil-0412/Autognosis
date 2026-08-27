@@ -11,7 +11,7 @@ async def process_document(text_content: str) -> dict:
     if not api_key:
         return {"error": "GROQ_API_KEY not found."}
         
-    model_name = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    model_name = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     
     try:
         llm = ChatGroq(
