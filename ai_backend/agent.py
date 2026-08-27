@@ -130,6 +130,38 @@ class FollowUps(BaseModel):
     video_label: Optional[str] = Field(default=None, description="Label for the video, if any.")
 
 
+# Groq's free tier allows 8,000 tokens per minute. TavilySearchResults hands the
+# model whole page extracts, and the react loop resends the full context on every
+# step, so two unbounded results were enough to blow the minute budget and get
+# the request rejected with a 429. Compact the results to a few hundred
+# characters each before they ever reach the context.
+_TAVILY_CHARS = 400
+
+
+@tool
+async def research_repair(query: str) -> str:
+    """Searches the web for repair procedures, recall notices, technical service
+    bulletins, and typical costs. Use for external or up-to-date information."""
+    try:
+        results = await TavilySearchResults(max_results=2).ainvoke({"query": query})
+    except Exception as e:
+        return f"Web research is unavailable right now: {e}"
+
+    if not isinstance(results, list) or not results:
+        return "No useful results found."
+
+    snippets = []
+    for item in results:
+        if not isinstance(item, dict):
+            continue
+        title = (item.get("title") or "").strip()
+        content = (item.get("content") or "").strip()[:_TAVILY_CHARS]
+        if content:
+            snippets.append(f"{title}: {content}" if title else content)
+
+    return "\n\n".join(snippets) or "No useful results found."
+
+
 # RAG tools connected to Neon pgvector
 @tool
 async def query_vehicle_history(query: str, vehicle_id: str) -> str:
@@ -168,7 +200,7 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
         **DIAGNOSTIC & WARRANTY PROCESS:**
         1. **Retrieve History**: If the user asks about past repairs, use `query_vehicle_history`.
         2. **Check Warranty**: If evaluating a part failure, use `check_warranty_status`.
-        3. **External Research**: Use `tavily_search_results_json` if you need external or up-to-date information (e.g. standard repair procedures, recall notices, or typical costs).
+        3. **External Research**: Use `research_repair` only when you genuinely need external or up-to-date information, such as a recall notice, a technical service bulletin, or a typical cost. Answer from your own knowledge when you can.
 
         **FOLLOW-UP SUGGESTIONS:**
         - Work out the powertrain from the year, make and model before you suggest
@@ -205,11 +237,7 @@ async def run_agent(query: str, history: list[dict], vehicle_context: str):
                 "and ask how you can assist them today. Be welcoming."
             )
 
-        # Agent Tools. Each web result is pushed into the model's context, so
-        # three of them cost real latency and burn through Groq's rate limit on
-        # long diagnoses. Two is enough to ground an answer.
-        tavily_tool = TavilySearchResults(max_results=2)
-        tools = [tavily_tool, query_vehicle_history, check_warranty_status]
+        tools = [research_repair, query_vehicle_history, check_warranty_status]
 
         # Build message history
         messages = []
